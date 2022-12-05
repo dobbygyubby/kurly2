@@ -46,7 +46,13 @@ def insBT(data):
     with sqlite3.connect(dbfile) as conn:
         cur=conn.cursor()
         cur.execute(inssql,data)
-
+        
+## review insert        
+def insRev(data):
+    inssql='insert into breview (pcode,rkey,review,date) values(?,?,?,?)'
+    with sqlite3.connect(dbfile) as conn:
+        cur=conn.cursor()
+        cur.execute(inssql,data)
 # 컬리 셀렉트하기
 def selBT():
     sql='select * from beauty'

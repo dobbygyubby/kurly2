@@ -10,7 +10,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 #%%
 from bs4 import BeautifulSoup as bs
 import sqlite3
-from kurlyprs.kprs import getItem,kinsDB
+from kurlyprs.kprs import getItem,kinsDB,insRev
 
 #%%
 coption= webdriver.ChromeOptions()
@@ -46,24 +46,30 @@ def kScrap(_srcurl= '',_selector='.css-vjtyom',_tgtsel='div > a'):
     return (elems,driver)
 #%%
 # 컬리로부터 데이터를 수집하여 DB 입력
-url='https://www.kurly.com/collections/beauty-nowhot?site=beauty&page=1'
-sel='.css-vjtyom'
-tsel='div > a'
-elems,driver=kScrap(url,sel,tsel)
-#kinsDB(elems)
-elems[2].text
+def getHot():
+    url='https://www.kurly.com/collections/beauty-nowhot?site=beauty&page=1'
+    sel='.css-vjtyom'
+    tsel='div > a'
+    elems,driver=kScrap(url,sel,tsel)
+    #####################################
+    #kinsDB(elems)
+    elems[2].text
 #%%
 # 버튼찾기
-url='https://www.kurly.com/goods/5161423'
-sel='.css-tse2s2'
-tsel='li > a'
-elems,driver=kScrap(url,sel,tsel)
-print(len(elems))
-# 후기클릭
-tgtSel='#top > div.css-n48rgu.ex9g73v0 > div.css-16c0d8l.e1brqtzw0 > nav > ul > li:nth-child(3) > a'
-kTarget(driver,tgtSel).click()
-#%%
-## 리뷰 가져오기
+def getPdt(pcode='5161423'):
+    # pcode 받아서 창을열고 리뷰클릭
+    url='https://www.kurly.com/goods/'+str(pcode)
+    sel='.css-tse2s2'
+    tsel='li > a'
+    elems,driver=kScrap(url,sel,tsel)
+    #time.sleep(2)
+    print(len(elems))
+    # 후기클릭
+    tgtSel='#top > div.css-n48rgu.ex9g73v0 > div.css-16c0d8l.e1brqtzw0 > nav > ul > li:nth-child(3) > a'
+    kTarget(driver,tgtSel).click()
+    time.sleep(2)
+    return driver
+    
 
 def getReview(pdtcode=5161423,driver=None):
     sel='.css-1nrf0nk'
@@ -76,14 +82,19 @@ def getReview(pdtcode=5161423,driver=None):
         user=elem.select('span.css-f3vz0n')[0].text[0]
         day=elem.select('footer span.css-14kcwq8')[0].text
         revkey=user+day+'_'+str(len(rev))
-        print(pdtcode,revkey,rev,day)
+        data=(pdtcode,revkey,rev,day)
+        insRev(data)
+        print('.',end='')
         #print(kgetBS(elem,'p'))
 #%%
 # 리뷰 하단의 다음 버튼이 있으면 클릭
+pdtcode=5161423
+driver=getPdt(pdtcode)
+
 nextButtonCss='#review > section > div.css-1nrf0nk.e1kog1is13 > div.css-jz9m4p.e1kog1is5 > button.css-1orps7k.e1kog1is1'
 nextButton=kTarget(driver,nextButtonCss)
 print('next button:',nextButton.get_attribute("disabled"))
-pdtcode=5161423
+
 while (nextButton.get_attribute("disabled")==None):
     print(nextButton.get_attribute("disabled"))
     getReview(pdtcode,driver)
