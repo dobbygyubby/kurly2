@@ -1,6 +1,12 @@
 # 컬리의 핫아이템 가져오기
-import sqlite3
-dbfile='data\kurly.db'
+
+import time
+from bs4 import BeautifulSoup as bs
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 
 def getItem(elem):
     pdtcode=elem.attrs['href'].replace('/goods/','')
@@ -38,31 +44,77 @@ def getItem(elem):
     return ('hot',pdtcode,coupon,title,disc,price,oriprice)
 #
 
-#data=('hot','1000074086', '10', '[아틀리에 코롱] 클레망틴 캘리포니아 코롱 압솔뤼 30ml', '15', '97750', '115000')
-def insBT(data):
+
+#%%
+# 목표 요소에 키값 입력하기
+def kSendkey(driver=None ,_selector='',kv=Keys.ENTER):
+    src=driver.find_elements(by=By.CSS_SELECTOR,value=_selector)
+    src[0].send_keys(kv)
     
-    inssql='insert into beauty (cate,pcode,coupon,title,sale,price,oriprice) \
-        values(?,?,?,?,?,?,?)'
-    with sqlite3.connect(dbfile) as conn:
-        cur=conn.cursor()
-        cur.execute(inssql,data)
+def kTarget(driver=None ,_selector=''):#.click() 을 위한 타겟
+    target=driver.find_element(by=By.CSS_SELECTOR,value=_selector)
+    return target
         
-## review insert        
-def insRev(data):
-    inssql='insert into breview (pcode,rkey,review,date) values(?,?,?,?)'
-    with sqlite3.connect(dbfile) as conn:
-        cur=conn.cursor()
-        cur.execute(inssql,data)
-# 컬리 셀렉트하기
-def selBT():
-    sql='select * from beauty'
-    with sqlite3.connect(dbfile) as conn:
-        cur=conn.cursor()
-        cur.execute(sql)
-        rows=cur.fetchall()
-    print('*'*30)
-    for row in rows:
-        print(row)
+def kgetBS(thtml='',_tgtsel=''):# bs4를 위한 함수
+    soup=bs(thtml,'html.parser')
+    elems=soup.select(_tgtsel)
+    return elems
+
+# 열린 url로 부터 원하는 요소 반환하기    
+def kgetElem(driver,_selector='.css-vjtyom',_tgtsel='div > a'):
+    src=driver.find_elements(by=By.CSS_SELECTOR,value=_selector)
+    tgtHtml=src[0].get_attribute('outerHTML')
+    elems =kgetBS(tgtHtml,_tgtsel)
+    return elems
+
+# 스크래이핑을 위해서 url 열기
+def kScrap(driver=None,_srcurl= '',_selector='.css-vjtyom',_tgtsel='div > a'):
+    driver.implicitly_wait(10)
+    driver.get(_srcurl)
+    elems=kgetElem(driver,_selector,_tgtsel)
+    return (elems,driver)
+#%%
+# 컬리로부터 데이터를 수집하여 DB 입력
+def getHot(pno=1):
+    url='https://www.kurly.com/collections/beauty-nowhot?site=beauty&page={}'.format(pno)
+    sel='.css-vjtyom'
+    tsel='div > a'
+    elems,driver=kScrap(driver,url,sel,tsel)
+    #####################################
+    #kinsDB(elems)
+    elems[2].text
+#%%
+# 버튼찾기
+def getPdt(pcode='5161423'):
+    # pcode 받아서 창을열고 리뷰클릭
+    url='https://www.kurly.com/goods/'+str(pcode)
+    sel='.css-tse2s2'
+    tsel='li > a'
+    elems,driver=kScrap(driver,url,sel,tsel)
+    #time.sleep(2)
+    print(len(elems))
+    # 후기클릭
+    tgtSel='#top > div.css-n48rgu.ex9g73v0 > div.css-16c0d8l.e1brqtzw0 > nav > ul > li:nth-child(3) > a'
+    kTarget(driver,tgtSel).click()
+    time.sleep(2)
+    return driver
+    
+
+def getReview(pdtcode=5161423,driver=None):
+    sel='.css-1nrf0nk'
+    tsel='div.css-169773r'
+    elems=kgetElem(driver,sel,tsel)
+    print('****',len(elems))
+    for elem in elems:
+        #print(elem)
+        rev=elem.select('article p')[0].text
+        user=elem.select('span.css-f3vz0n')[0].text[0]
+        day=elem.select('footer span.css-14kcwq8')[0].text
+        revkey=user+day+'_'+str(len(rev))
+        data=(pdtcode,revkey,rev,day)
+        insRev(data)
+        print('.',end='')
+        #print(kgetBS(elem,'p'))
         
 # 크롤링하여 DB에 넣기
 def kinsDB(elems):
