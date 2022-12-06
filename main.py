@@ -1,5 +1,9 @@
 #%%
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import seaborn as sns
 
+import re
 from kurlyprs.kdb import selBT
 rows=selBT("breview",'limit 1,2','review')
 print(rows)
@@ -29,11 +33,19 @@ def makeWdict(senten):
     return wdf
 
 # %%
-rows=selBT("breview",'limit 5','review')
+def reSEN(sen):
+    pattern='[^ㄱ-힣a-zA-Z0-9 .!?]'
+    return re.sub(pattern,'',sen)
+
+rows=selBT("breview",'limit 20','review')
+mdf=pd.DataFrame()
 for r in rows:
-    sdf=makeWdict(r[0])
+    sen=reSEN(r[0])
+    sdf=makeWdict(sen)
     print(sdf.index)
-    
+    mdf=pd.merge(mdf,sdf,how='outer', left_index=True, right_index=True,)
+mdf.fillna(0)
+
 # %%
-rows
+plt.imshow(mdf.values)
 # %%
