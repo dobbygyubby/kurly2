@@ -1,15 +1,39 @@
 #%%
 
 from kurlyprs.kdb import selBT
-rows=selBT("breview",'limit 1')
+rows=selBT("breview",'limit 1,2','review')
 print(rows)
 # %%
 # JDK 설치 
 # https://www.oracle.com/java/technologies/downloads/#jdk19-windows
 # pip install konlpy
+import pandas as pd
 from konlpy.tag import Kkma
-kkma=Kkma()
-pos=kkma.pos("안녕하세요 여러분")
-pos
+#%%
 
+#bow Bag of words
+#%%
+def makeWdict(senten):
+    kkma=Kkma()
+    pos=kkma.pos(senten)
+    pocate=['NNG','NNP','NNB','NNM','VV','VA','VCP','VCN']
+    wdict={}
+    for po in pos:
+        if(po[1] in pocate):
+            print(po[0])
+            if po[0] in wdict.keys():
+                wdict[po[0]]+=1
+            else:
+                wdict[po[0]]=1
+            wdf=pd.DataFrame(data=list(wdict.items())).set_index(0)
+    return wdf
+
+# %%
+rows=selBT("breview",'limit 5','review')
+for r in rows:
+    sdf=makeWdict(r[0])
+    print(sdf.index)
+    
+# %%
+rows
 # %%
