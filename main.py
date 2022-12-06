@@ -76,9 +76,14 @@ SELECT a.id,count(rkey) cnt from beauty a
  order by cnt desc
  limit 10
 """
+rows=selSQL(sql)
 df=pd.DataFrame()
 for r in rows:
     rows=selSQL(msql.format(r[0]))
-    mdf=pd.DataFrame(rows)
-    #df=pd.merge(df,mdf,how='outer',left_index=True,right_index=True)
+    mdf=pd.DataFrame(rows,columns=['id',str(r[0])]).set_index('id')
+    df=pd.merge(df,mdf,how='outer',left_index=True,right_index=True)
+# %%
+df.iloc[:-1,:].fillna(0).plot()
+# %%
+df
 # %%
