@@ -7,6 +7,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
+from kurlyprs.kdb import insBT,insRev,selBT
 
 def getItem(elem):
     pdtcode=elem.attrs['href'].replace('/goods/','')
@@ -73,19 +74,31 @@ def kScrap(driver=None,_srcurl= '',_selector='.css-vjtyom',_tgtsel='div > a'):
     driver.get(_srcurl)
     elems=kgetElem(driver,_selector,_tgtsel)
     return (elems,driver)
-#%%
+
+# 크롤링하여 DB에 넣기
+def kinsDB(elems):
+    for elem in elems:
+        data=getItem(elem)
+        print('EEEEEEEEEE',data)
+        rows=selBT('beauty','where pcode='+data[1])
+        if(rows):
+            print('이미 존재함 beauty')
+        else:
+            insBT(data)
+        print(".",end='')
+        
 # 컬리로부터 데이터를 수집하여 DB 입력
-def getHot(pno=1):
+def getHot(driver=None,pno=1):
     url='https://www.kurly.com/collections/beauty-nowhot?site=beauty&page={}'.format(pno)
     sel='.css-vjtyom'
     tsel='div > a'
     elems,driver=kScrap(driver,url,sel,tsel)
     #####################################
-    #kinsDB(elems)
+    kinsDB(elems)
     elems[2].text
 #%%
 # 버튼찾기
-def getPdt(pcode='5161423'):
+def getPdt(driver=None,pcode='5161423'):
     # pcode 받아서 창을열고 리뷰클릭
     url='https://www.kurly.com/goods/'+str(pcode)
     sel='.css-tse2s2'
@@ -100,6 +113,7 @@ def getPdt(pcode='5161423'):
     return driver
     
 
+    
 def getReview(pdtcode=5161423,driver=None):
     sel='.css-1nrf0nk'
     tsel='div.css-169773r'
@@ -116,10 +130,19 @@ def getReview(pdtcode=5161423,driver=None):
         print('.',end='')
         #print(kgetBS(elem,'p'))
         
-# 크롤링하여 DB에 넣기
-def kinsDB(elems):
-    for elem in elems:
-        data=getItem(elem)
-        insBT(data)
-        print(".",end='')
+def getAllRev(driver=None,pdtcode=5161423):
+    driver=getPdt(pdtcode)
+    nextButtonCss='#review > section > div.css-1nrf0nk.e1kog1is13 > div.css-jz9m4p.e1kog1is5 > button.css-1orps7k.e1kog1is1'
+    nextButton=kTarget(driver,nextButtonCss)
+    print('next button:',nextButton.get_attribute("disabled"))
+
+    while (nextButton.get_attribute("disabled")==None):
+        print(nextButton.get_attribute("disabled"))
+        getReview(pdtcode,driver)
+        print('-'*30)
+        nextButton.click()
+        time.sleep(2)
+    getReview(pdtcode,driver)
+    
+
         
