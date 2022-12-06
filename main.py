@@ -13,7 +13,6 @@ from kurlyprs.kprs import getHot,getAllRev
 from kurlyprs.kdb import selBT
 
 
-#%%
 coption= webdriver.ChromeOptions()
 driver = webdriver.Chrome(ChromeDriverManager().install(),options=coption)
 
@@ -24,9 +23,10 @@ for i in range(1,3):
     driver=getHot(driver,i)
 #getAllRev(driver,pdtcode)
 #%%
-rows=selBT('beauty','')
+rows=selBT('beauty','','pcode')
 print(rows)
-
+for row in rows:
+    getAllRev(driver,row[0])
 
 
     

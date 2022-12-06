@@ -95,7 +95,7 @@ def getHot(driver=None,pno=1):
     elems,driver=kScrap(driver,url,sel,tsel)
     #####################################
     kinsDB(elems)
-    elems[2].text
+    return driver
 #%%
 # 버튼찾기
 def getPdt(driver=None,pcode='5161423'):
@@ -126,20 +126,25 @@ def getReview(pdtcode=5161423,driver=None):
         day=elem.select('footer span.css-14kcwq8')[0].text
         revkey=user+day+'_'+str(len(rev))
         data=(pdtcode,revkey,rev,day)
-        insRev(data)
+        rows=selBT('breview','where rkey="'+data[1]+'"','rkey')
+        if(rows):
+            print('x',end='')
+        else:
+            insRev(data)
         print('.',end='')
         #print(kgetBS(elem,'p'))
         
 def getAllRev(driver=None,pdtcode=5161423):
-    driver=getPdt(pdtcode)
+    print('*****',pdtcode,'*********')
+    driver=getPdt(driver,pdtcode)
     nextButtonCss='#review > section > div.css-1nrf0nk.e1kog1is13 > div.css-jz9m4p.e1kog1is5 > button.css-1orps7k.e1kog1is1'
     nextButton=kTarget(driver,nextButtonCss)
-    print('next button:',nextButton.get_attribute("disabled"))
+    #print('next button:',nextButton.get_attribute("disabled"))
 
     while (nextButton.get_attribute("disabled")==None):
-        print(nextButton.get_attribute("disabled"))
+        #print(nextButton.get_attribute("disabled"))
         getReview(pdtcode,driver)
-        print('-'*30)
+        #print('-'*30)
         nextButton.click()
         time.sleep(2)
     getReview(pdtcode,driver)
